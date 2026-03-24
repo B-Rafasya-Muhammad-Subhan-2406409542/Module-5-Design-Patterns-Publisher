@@ -48,15 +48,15 @@ You can install Postman via this website: https://www.postman.com/downloads/
     (You might want to use `cargo check` if you only need to verify your work without running the app.)
 
 ## Mandatory Checklists (Publisher)
--   [x] Clone https://gitlab.com/ichlaffterlalu/bambangshop to a new repository.
+-   [X] Clone https://gitlab.com/ichlaffterlalu/bambangshop to a new repository.
 -   **STAGE 1: Implement models and repositories**
-    -   [ ] Commit: `Create Subscriber model struct.`
-    -   [ ] Commit: `Create Notification model struct.`
-    -   [ ] Commit: `Create Subscriber database and Subscriber repository struct skeleton.`
-    -   [ ] Commit: `Implement add function in Subscriber repository.`
-    -   [ ] Commit: `Implement list_all function in Subscriber repository.`
-    -   [ ] Commit: `Implement delete function in Subscriber repository.`
-    -   [ ] Write answers of your learning module's "Reflection Publisher-1" questions in this README.
+    -   [X] Commit: `Create Subscriber model struct.`
+    -   [X] Commit: `Create Notification model struct.`
+    -   [X] Commit: `Create Subscriber database and Subscriber repository struct skeleton.`
+    -   [X] Commit: `Implement add function in Subscriber repository.`
+    -   [X] Commit: `Implement list_all function in Subscriber repository.`
+    -   [X] Commit: `Implement delete function in Subscriber repository.`
+    -   [X] Write answers of your learning module's "Reflection Publisher-1" questions in this README.
 -   **STAGE 2: Implement services and controllers**
     -   [ ] Commit: `Create Notification service struct skeleton.`
     -   [ ] Commit: `Implement subscribe function in Notification service.`
@@ -77,6 +77,14 @@ This is the place for you to write reflections:
 ### Mandatory (Publisher) Reflections
 
 #### Reflection Publisher-1
+**1. Do we still need an interface (or trait in Rust) in this BambangShop case, or a single Model struct is enough?**
+Dalam kasus BambangShop ini, penggunaan sebuah *single Model struct* (`Subscriber`) sudah cukup dan kita tidak diwajibkan menggunakan *interface* atau *trait*. Hal ini karena semua *subscriber* pada sistem kita memiliki struktur dan perilaku yang identik (seragam), yaitu entitas web eksternal yang menerima notifikasi melalui *HTTP POST request* ke `url` masing-masing. *Interface* (atau *trait*) pada *Observer pattern* umumnya dibutuhkan jika *Publisher* harus memberitahu berbagai jenis *Subscriber* yang berbeda-beda cara penanganannya (misal: ada yang via Email, via SMS, atau via Webhook). Karena di sistem kita hanya ada satu metode notifikasi (Webhook via URL), *single struct* sangat memadai dan membuat kode lebih simpel.
+
+**2. Is using Vec (list) sufficient or using DashMap (map/dictionary) like we currently use is necessary for this case?**
+Penggunaan `DashMap` (map/dictionary) sangat disarankan dan jauh lebih baik daripada `Vec` (list) untuk kasus ini. Karena `id` atau `url` sifatnya unik, kita akan sering melakukan operasi pencarian (*lookup*) dan penghapusan (*delete*) berdasarkan `url` tersebut (misalnya saat fitur *unsubscribe* dipanggil). Jika menggunakan `Vec`, kita harus melakukan iterasi satu per satu secara linear (*time complexity* $O(n)$) untuk menemukan *subscriber* yang tepat. Sebaliknya, `DashMap` memungkinkan pencarian, penambahan, dan penghapusan data berdasarkan *key* (`url`) secara instan dengan *time complexity* rata-rata $O(1)$.
+
+**3. Do we still need DashMap or we can implement Singleton pattern instead?**
+Kita **tetap membutuhkan DashMap**. *Singleton pattern* dan `DashMap` memecahkan dua masalah yang berbeda. *Singleton pattern* (yang di Rust kita capai menggunakan *macro* `lazy_static!`) hanya memastikan bahwa variabel `SUBSCRIBERS` diinisialisasi satu kali dan dapat diakses secara global. Namun, *Singleton* tidak menjamin keamanan konkurensi (*thread-safety*). Karena framework Rocket bersifat *multi-threaded* (menangani banyak *request* HTTP secara bersamaan), banyak *thread* bisa saja mencoba membaca dan mengubah data *subscriber* secara bersamaan. `DashMap` digunakan secara spesifik karena ia adalah implementasi *HashMap* yang dirancang aman untuk skenario konkurensi tersebut (*thread-safe*), menghindari *race conditions* atau data *corrupted* yang akan ditolak oleh *compiler* ketat Rust.
 
 #### Reflection Publisher-2
 
