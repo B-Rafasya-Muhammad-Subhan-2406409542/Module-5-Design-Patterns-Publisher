@@ -87,5 +87,21 @@ Penggunaan `DashMap` (map/dictionary) sangat disarankan dan jauh lebih baik dari
 Kita **tetap membutuhkan DashMap**. *Singleton pattern* dan `DashMap` memecahkan dua masalah yang berbeda. *Singleton pattern* (yang di Rust kita capai menggunakan *macro* `lazy_static!`) hanya memastikan bahwa variabel `SUBSCRIBERS` diinisialisasi satu kali dan dapat diakses secara global. Namun, *Singleton* tidak menjamin keamanan konkurensi (*thread-safety*). Karena framework Rocket bersifat *multi-threaded* (menangani banyak *request* HTTP secara bersamaan), banyak *thread* bisa saja mencoba membaca dan mengubah data *subscriber* secara bersamaan. `DashMap` digunakan secara spesifik karena ia adalah implementasi *HashMap* yang dirancang aman untuk skenario konkurensi tersebut (*thread-safe*), menghindari *race conditions* atau data *corrupted* yang akan ditolak oleh *compiler* ketat Rust.
 
 #### Reflection Publisher-2
+**1. Why do we need to separate "Service" and "Repository" from a Model?**
+Pemisahan ini dilakukan untuk menerapkan prinsip *Single Responsibility Principle* (SRP) dan *Separation of Concerns* dalam arsitektur perangkat lunak. 
+- **Model** murni digunakan sebagai *data container* atau representasi struktur data.
+- **Repository** (Data Access Layer) bertanggung jawab khusus untuk berinteraksi dengan media penyimpanan (*database*, memori, atau API eksternal), memisahkan query data dari logika aplikasi.
+- **Service** (Business Logic Layer) bertanggung jawab atas aturan bisnis dan memproses data, menjembatani *Controller* dan *Repository*.
+Dengan memisahkan ketiganya, kode menjadi lebih terstruktur, modular, mudah di-*maintain*, dan jauh lebih mudah untuk diuji (*unit testing*) karena setiap komponen memiliki satu tugas spesifik.
+
+**2. What happens if we only use the Model? How do interactions between models affect code complexity?**
+Jika kita hanya menggunakan *Model* (sering disebut *Fat Model*), seluruh logika bisnis dan operasi *database* akan menumpuk di dalam satu *struct*. Hal ini akan menciptakan *tight coupling* (ketergantungan yang tinggi) antar komponen. Misalnya, *Model* `Product` harus tahu cara memanggil *Model* `Notification`, dan `Notification` harus tahu cara mencari data di *database* `Subscriber`. Akibatnya, kompleksitas kode akan meledak (*spaghetti code*). Jika ada perubahan pada cara penyimpanan data (misal dari memori ke PostgreSQL), kita harus merombak seluruh *Model* yang memuat fungsi *database* dan logika bisnis secara bersamaan, sehingga risiko munculnya *bug* sangat besar.
+
+**3. Tell us how Postman helps you to test your current work and list useful features.**
+Postman sangat membantu dalam menguji REST API yang saya buat tanpa harus membangun antarmuka (*frontend*) terlebih dahulu. Saya bisa menyimulasikan berbagai *HTTP request* (GET, POST, dll.) dan melihat *response*-nya secara langsung, baik *body* datanya (dalam bentuk JSON) maupun *HTTP status code* (seperti 201 Created atau 404 Not Found).
+Beberapa fitur Postman yang menurut saya sangat berguna untuk tugas maupun proyek rekayasa perangkat lunak ke depannya adalah:
+- **Collections:** Untuk mengelompokkan *endpoint-endpoint* yang saling berkaitan agar lebih terorganisir.
+- **Environments & Variables:** Memungkinkan kita berpindah dari environment *development* (localhost) ke *production* dengan cepat tanpa harus mengubah URL secara manual di setiap *request*.
+- **Tests & Pre-request Scripts:** Sangat berguna untuk melakukan *automated testing* sederhana pada API yang sudah dibuat.
 
 #### Reflection Publisher-3
